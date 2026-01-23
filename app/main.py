@@ -7,6 +7,7 @@ from app.array_extensions import key_exists
 from app.commands import handle_command
 from app.forecast import send_daily_forecast
 from app.secrets import get_telegram_api_key
+from app.welcome import handle_new_members
 
 app = FastAPI()
 
@@ -18,10 +19,18 @@ async def message_stuff(request_data: dict[str, Any]) -> Response:
     print(request_data)
     message = get_message_or_update(request_data)
 
-    if not message or not key_exists(message, "text") or not message["text"].startswith("/"):
+    if not message:
         return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
 
     bot = telegram.Bot(token=get_telegram_api_key())
+
+    if key_exists(message, "new_chat_members"):
+        await handle_new_members(bot, message)
+        return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
+
+    if not key_exists(message, "text") or not message["text"].startswith("/"):
+        return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
+
     await handle_command(bot, message)
 
     return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
