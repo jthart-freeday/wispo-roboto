@@ -60,39 +60,7 @@ def get_addresshotel() -> str:
     return "Adler Resort, Hasenbachweg 378, 5753 Saalbach, Oostenrijk"
 
 
-def get_mansplain_text() -> str:
-    return """Milena is a software engineer.
-She's reviewing a pull request and says:
-
-"We shouldn't do it this way, it'll break when the async job retries."
-
-A male colleague leans back in his chair.
-
-"Yeah, so the thing with async jobs," he says, "is that they can retry."
-
-Milena pauses.
-
-"Yes," she replies. "That's what I just said."
-
-He continues anyway.
-
-He explains what async means.
-He explains what retries are.
-He explains why retries might be dangerous.
-
-He concludes with confidence:
-
-"So yeah, we should be careful here."
-
-Milena nods.
-
-They change the code exactly the way she suggested —
-but now it's his idea.
-
-That's mansplaining."""
-
-
 def get_mansplain_image_url() -> str:
-    return "https://i.imgur.com/5seN7JL.png"
+    return "https://cdn.freeday.ai/wintersport/Screenshot%202025-08-13%20at%2014.13.16.png"
 
 

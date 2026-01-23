@@ -10,7 +10,6 @@ from app.mother_of_all_file import (
     get_flip,
     get_manly,
     get_mansplain_image_url,
-    get_mansplain_text,
     get_name,
     get_rng,
 )
@@ -112,7 +111,7 @@ async def handle_mansplain(bot: telegram.Bot, message: dict) -> None:
     await bot.send_photo(
         chat_id=message["chat"]["id"],
         photo=get_mansplain_image_url(),
-        caption=get_mansplain_text(),
+        caption="No more text needed",
     )
 
 async def handle_command(bot: telegram.Bot, message: dict) -> bool:
