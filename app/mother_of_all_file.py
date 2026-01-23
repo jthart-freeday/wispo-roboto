@@ -1,7 +1,7 @@
 import random
 import re
 
-names = ["Amy", "Yoni", "Rutger", "Irene", "Tijs"]
+names = ["Mark Jan"]
 
 
 def get_rng(message_text: str) -> str:
@@ -21,7 +21,21 @@ def get_rng(message_text: str) -> str:
     return output
 
 
-def get_name() -> str:
+def get_name(message: dict) -> str:
+    if "from" not in message:
+        return random.choice(names)
+    
+    user = message["from"]
+    first_name = user.get("first_name", "")
+    last_name = user.get("last_name", "")
+    username = user.get("username", "")
+    
+    if first_name and last_name:
+        return f"{first_name} {last_name}"
+    elif first_name:
+        return first_name
+    elif username:
+        return username
     return random.choice(names)
 
 
