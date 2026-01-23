@@ -6,7 +6,7 @@ import telegram
 
 from app.secrets import get_telegram_api_key
 
-TELEGRAM_CHAT_ID = 402877939
+TELEGRAM_CHAT_ID = -5036926629
 SAALBACH_LAT = 47.3917
 SAALBACH_LON = 12.6364
 
