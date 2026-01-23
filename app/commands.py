@@ -75,7 +75,7 @@ async def handle_rng(bot: telegram.Bot, message: dict) -> None:
 
 @command("dishes", "Pick someone to do the dishes")
 async def handle_dishes(bot: telegram.Bot, message: dict) -> None:
-    name = get_name()
+    name = get_name(message)
     text = f"Today, {name} will be doing the dishes!! LOL loser 😙"
     await send_message(bot, text, message["chat"]["id"])
 
