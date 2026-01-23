@@ -111,12 +111,12 @@ async def handle_mansplain(bot: telegram.Bot, message: dict) -> None:
 
 @command("mountainview", "Get a live webcam from Saalbach Hinterglemm")
 async def handle_mountainview(bot: telegram.Bot, message: dict) -> None:
-    webcam_url = await get_saalbach_webcam_image()
+    webcam_image_bytes = await get_saalbach_webcam_image()
     
-    if webcam_url:
+    if webcam_image_bytes:
         await bot.send_photo(
             chat_id=message["chat"]["id"],
-            photo=webcam_url,
+            photo=webcam_image_bytes,
             caption="📸 Live from Saalbach Hinterglemm! 🏔️⛷️",
         )
     else:
