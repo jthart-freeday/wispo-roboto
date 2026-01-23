@@ -8,7 +8,6 @@ from app.mother_of_all_file import (
     get_addresshotel,
     get_back,
     get_flip,
-    get_manly,
     get_mansplain_image_url,
     get_mansplain_text,
     get_name,
@@ -79,12 +78,6 @@ async def handle_dishes(bot: telegram.Bot, message: dict) -> None:
     name = get_name(message)
     text = f"Today, {name} will be doing the dishes!! LOL loser 😙"
     await send_message(bot, text, message["chat"]["id"])
-
-
-@command("manly", "Generate a... size indicator")
-async def handle_manly(bot: telegram.Bot, message: dict) -> None:
-    size = get_manly()
-    await send_message(bot, size, message["chat"]["id"])
 
 
 @command("addresshotel", "Get the hotel address")

@@ -39,11 +39,6 @@ def get_name(message: dict) -> str:
     return random.choice(names)
 
 
-def get_manly() -> str:
-    nmb = random.randint(1, 30)
-    return "8" + nmb * "=" + "D"
-
-
 def get_flip() -> str:
     return "(╯°□°)╯︵ ┻━┻"
 
