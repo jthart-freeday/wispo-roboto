@@ -1,40 +1,16 @@
-from datetime import date, timedelta
 from typing import Any
 
-import httpx
 import telegram
 from fastapi import FastAPI, Response
 
 from app.array_extensions import key_exists
-from app.commands import handle_command, command
+from app.commands import handle_command
 from app.forecast import send_daily_forecast
-from app.secrets import get_skaping_api_key, get_telegram_api_key
+from app.secrets import get_telegram_api_key
 
 app = FastAPI()
 
 JSON_MEDIA_TYPE = "application/json"
-
-
-@command("mountainview", "Get a mountain image")
-async def handle_mountainview(bot: telegram.Bot, message: dict) -> None:
-    mountain_image_data = await get_mountain_image()
-    await bot.send_photo(
-        chat_id=message["chat"]["id"],
-        photo=mountain_image_data["medias"][0]["urls"]["large"],
-        caption=mountain_image_data["medias"][0]["date"],
-    )
-
-
-async def get_mountain_image() -> dict:
-    request_data = {
-        "types": "image",
-        "api_key": get_skaping_api_key(),
-        "center": (date.today() + timedelta(days=1)).strftime("%Y-%m-%d"),
-        "count": 1,
-    }
-    async with httpx.AsyncClient() as client:
-        resp = await client.post("https://api.skaping.com//media/search", data=request_data)
-        return resp.json()
 
 
 @app.post("/message")
