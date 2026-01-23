@@ -14,6 +14,7 @@ from app.mother_of_all_file import (
 )
 from app.joke import get_joke
 from app.mountainview import get_saalbach_webcam_image
+from app.forecast import send_daily_forecast
 
 CommandHandler = Callable[[telegram.Bot, dict], Awaitable[None]]
 
@@ -129,6 +130,11 @@ async def handle_mountainview(bot: telegram.Bot, message: dict) -> None:
             chat_id=message["chat"]["id"],
             text="Sorry, couldn't fetch webcam image right now. Try again later! 🏔️",
         )
+
+
+@command("forecast", "Get today's weather forecast")
+async def handle_forecast_command(bot: telegram.Bot, message: dict) -> None:
+    await send_daily_forecast()
 
 
 async def handle_command(bot: telegram.Bot, message: dict) -> bool:
