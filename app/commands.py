@@ -99,6 +99,11 @@ async def handle_back(bot: telegram.Bot, message: dict) -> None:
     await send_message(bot, get_back(), message["chat"]["id"])
 
 
+@command("whoisbuyingthenextround", "Find out who's buying the next round")
+async def handle_whoisbuyingthenextround(bot: telegram.Bot, message: dict) -> None:
+    await send_message(bot, "Ties", message["chat"]["id"])
+
+
 @command("mansplain", "Get a mansplain")
 async def handle_mansplain(bot: telegram.Bot, message: dict) -> None:
     await bot.send_photo(
