@@ -13,6 +13,7 @@ from app.mother_of_all_file import (
     get_rng,
 )
 from app.joke import get_joke
+from app.mountainview import get_saalbach_webcam_image
 
 CommandHandler = Callable[[telegram.Bot, dict], Awaitable[None]]
 
@@ -106,6 +107,24 @@ async def handle_mansplain(bot: telegram.Bot, message: dict) -> None:
         photo=get_mansplain_image_url(),
         caption="No more text needed",
     )
+
+
+@command("mountainview", "Get a live webcam from Saalbach Hinterglemm")
+async def handle_mountainview(bot: telegram.Bot, message: dict) -> None:
+    webcam_url = await get_saalbach_webcam_image()
+    
+    if webcam_url:
+        await bot.send_photo(
+            chat_id=message["chat"]["id"],
+            photo=webcam_url,
+            caption="📸 Live from Saalbach Hinterglemm! 🏔️⛷️",
+        )
+    else:
+        await bot.send_message(
+            chat_id=message["chat"]["id"],
+            text="Sorry, couldn't fetch webcam image right now. Try again later! 🏔️",
+        )
+
 
 async def handle_command(bot: telegram.Bot, message: dict) -> bool:
     text = message.get("text", "")
