@@ -1,4 +1,5 @@
 import logging
+import random
 from datetime import date
 
 import httpx
@@ -15,32 +16,132 @@ VILLAGE_ELEVATION = 1003  # Saalbach village
 MOUNTAIN_ELEVATION = 2096  # Schattberg summit
 
 
+def get_snow_depth_comment(depth_cm: float) -> str:
+    if depth_cm >= 150:
+        return "DEEP POWDER PARADISE! 🤩"
+    elif depth_cm >= 100:
+        return "Waist-deep powder! 😍"
+    elif depth_cm >= 50:
+        return "Knee-deep! Perfect! 🎿"
+    elif depth_cm >= 20:
+        return "Not bad! 👍"
+    else:
+        return "Needs more snow! 🙏"
+
+
+def get_fresh_snow_alert(snowfall_cm: float) -> str:
+    if snowfall_cm >= 20:
+        return "🚨 MASSIVE POWDER ALERT! IT'S DUMPING! 🚨"
+    elif snowfall_cm >= 10:
+        return "🎉 POWDER ALERT! Fresh pow incoming! 🎉"
+    elif snowfall_cm >= 5:
+        return "❄️ Nice! Some fresh snow! ❄️"
+    return ""
+
+
+def get_temp_comment(temp: float) -> str:
+    if temp < -15:
+        return "🥶 BRUTALLY COLD! Layer up!"
+    elif temp < -10:
+        return "🥶 Freezing! Bundle up!"
+    elif temp < -5:
+        return "❄️ Cold and crisp!"
+    elif temp < 0:
+        return "Perfect skiing temp!"
+    elif temp < 5:
+        return "☀️ Spring skiing weather!"
+    else:
+        return "🌡️ Getting warm! Morning runs recommended!"
+
+
+def get_condition_rating(mountain_snow: float, snowfall: float, temp: float) -> str:
+    score = 0
+    
+    if mountain_snow >= 100:
+        score += 2
+    elif mountain_snow >= 50:
+        score += 1
+    
+    if snowfall >= 10:
+        score += 2
+    elif snowfall >= 5:
+        score += 1
+    
+    if -10 <= temp <= 0:
+        score += 1
+    
+    if score >= 5:
+        return "⭐⭐⭐⭐⭐ EPIC CONDITIONS!"
+    elif score >= 3:
+        return "⭐⭐⭐⭐ Excellent skiing!"
+    elif score >= 2:
+        return "⭐⭐⭐ Good conditions!"
+    else:
+        return "⭐⭐ We'll make it work! 💪"
+
+
+def get_countdown_message(days: int) -> str:
+    if days <= 0:
+        return "🎉 IT'S HERE! IT'S HAPPENING! LET'S GOOOOO! 🎉"
+    elif days == 1:
+        return "🔥 TOMORROW!!! ONE MORE SLEEP!! 🔥"
+    elif days <= 3:
+        return f"🚨 {days} DAYS! PACKING TIME! 🎒"
+    elif days <= 7:
+        return f"⏰ {days} days! Almost time to shred! 🏂"
+    elif days <= 14:
+        return f"📅 {days} days! Next week(ish)! Getting close! 🎿"
+    else:
+        messages = [
+            f"⏳ {days} days! Time to start doing squats! 🏋️",
+            f"🗓️ {days} days! Have you waxed your skis yet? 🎿",
+            f"⛷️ {days} days until SHRED TIME! 🤘",
+            f"🏔️ {days} days! The mountains are calling! 📞",
+            f"❄️ {days} days! Start planning your après! 🍻",
+            f"🎿 {days} days! Time flies when you're excited! ⏰",
+        ]
+        return random.choice(messages)
+
+
 def make_forecast(village: dict, mountain: dict) -> str:
     village_temp = village["current"]["temperature_2m"]
     village_snow_m = village["current"].get("snow_depth", 0) or 0
-    village_snow = village_snow_m * 100  # API returns meters, convert to cm
+    village_snow = village_snow_m * 100
     village_snowfall = village["daily"]["snowfall_sum"][0] or 0
     
     mountain_temp = mountain["current"]["temperature_2m"]
     mountain_snow_m = mountain["current"].get("snow_depth", 0) or 0
-    mountain_snow = mountain_snow_m * 100  # API returns meters, convert to cm
+    mountain_snow = mountain_snow_m * 100
     mountain_snowfall = mountain["daily"]["snowfall_sum"][0] or 0
     
     days = (date(2026, 3, 11) - date.today()).days
     
-    msg = (
-        "Hi there! ⛷🏂\n\n"
-        "Here is your daily weather update for Saalbach Hinterglemm:\n\n"
-        f"🏘️ *Village* ({VILLAGE_ELEVATION}m)\n"
-        f"  • Temperature: {village_temp}°C\n"
-        f"  • Snow depth: {village_snow:.0f}cm\n"
-        f"  • Fresh snow today: {village_snowfall:.1f}cm\n\n"
-        f"🏔️ *Mountain* ({MOUNTAIN_ELEVATION}m)\n"
-        f"  • Temperature: {mountain_temp}°C\n"
-        f"  • Snow depth: {mountain_snow:.0f}cm\n"
-        f"  • Fresh snow today: {mountain_snowfall:.1f}cm\n\n"
-        f"Only {days} days left! ❄️"
-    )
+    max_snowfall = max(village_snowfall, mountain_snowfall)
+    fresh_snow_alert = get_fresh_snow_alert(max_snowfall)
+    condition_rating = get_condition_rating(mountain_snow, mountain_snowfall, mountain_temp)
+    countdown = get_countdown_message(days)
+    
+    msg = "Hi there! ⛷🏂\n\n"
+    
+    if fresh_snow_alert:
+        msg += f"{fresh_snow_alert}\n\n"
+    
+    msg += f"*{condition_rating}*\n\n"
+    
+    msg += "📊 *Weather Update for Saalbach Hinterglemm:*\n\n"
+    
+    msg += f"🏘️ *Village* ({VILLAGE_ELEVATION}m)\n"
+    msg += f"  • Temperature: {village_temp}°C {get_temp_comment(village_temp)}\n"
+    msg += f"  • Snow depth: {village_snow:.0f}cm\n"
+    msg += f"  • Fresh snow: {village_snowfall:.1f}cm\n\n"
+    
+    msg += f"🏔️ *Mountain* ({MOUNTAIN_ELEVATION}m)\n"
+    msg += f"  • Temperature: {mountain_temp}°C {get_temp_comment(mountain_temp)}\n"
+    msg += f"  • Snow depth: {mountain_snow:.0f}cm - {get_snow_depth_comment(mountain_snow)}\n"
+    msg += f"  • Fresh snow: {mountain_snowfall:.1f}cm\n\n"
+    
+    msg += f"*{countdown}*"
+    
     return msg
 
 
@@ -60,7 +161,7 @@ async def get_weather_data(elevation: int) -> dict:
 
 
 async def send_message(bot: telegram.Bot, msg: str, chat_id: int) -> None:
-    await bot.send_message(text=msg, chat_id=chat_id)
+    await bot.send_message(text=msg, chat_id=chat_id, parse_mode="Markdown")
 
 
 async def send_daily_forecast() -> None:
