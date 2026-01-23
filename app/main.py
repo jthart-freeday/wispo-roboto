@@ -42,7 +42,7 @@ async def message_stuff(request_data: dict[str, Any]) -> Response:
     print(request_data)
     message = get_message_or_update(request_data)
 
-    if not key_exists(message, "text") or not message["text"].startswith("/"):
+    if not message or not key_exists(message, "text") or not message["text"].startswith("/"):
         return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
 
     bot = telegram.Bot(token=get_telegram_api_key())
@@ -51,10 +51,12 @@ async def message_stuff(request_data: dict[str, Any]) -> Response:
     return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
 
 
-def get_message_or_update(update: dict) -> dict:
+def get_message_or_update(update: dict) -> dict | None:
     if key_exists(update, "edited_message"):
         return update["edited_message"]
-    return update["message"]
+    if key_exists(update, "message"):
+        return update["message"]
+    return None
 
 
 @app.get("/health")
