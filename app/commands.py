@@ -9,7 +9,8 @@ from app.mother_of_all_file import (
     get_back,
     get_flip,
     get_manly,
-    get_mansplain,
+    get_mansplain_image_url,
+    get_mansplain_text,
     get_name,
     get_rng,
 )
@@ -108,7 +109,11 @@ async def handle_back(bot: telegram.Bot, message: dict) -> None:
 
 @command("mansplain", "Get a mansplain")
 async def handle_mansplain(bot: telegram.Bot, message: dict) -> None:
-    await send_message(bot, get_mansplain(), message["chat"]["id"])
+    await bot.send_photo(
+        chat_id=message["chat"]["id"],
+        photo=get_mansplain_image_url(),
+        caption=get_mansplain_text(),
+    )
 
 async def handle_command(bot: telegram.Bot, message: dict) -> bool:
     text = message.get("text", "")
