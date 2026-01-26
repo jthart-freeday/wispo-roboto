@@ -150,7 +150,7 @@ After deploying, set your Telegram bot webhook to point to Cloud Run:
 ```bash
 CLOUD_RUN_URL=$(gcloud run services describe wispo-roboto --region europe-west1 --format='value(status.url)')
 
-curl "https://api.telegram.org/bot8209209157:AAF8t6jGXEFehvCZXqTJDKzywq1E5dJuaVI/setWebhook?url=${CLOUD_RUN_URL}/message"
+curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=${CLOUD_RUN_URL}/message"
 ```
 
 ## API Endpoints
