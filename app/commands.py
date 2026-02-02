@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Callable, Awaitable
 
 import telegram
+from telegram import BotCommand
 
 from app.mother_of_all_file import (
     get_address,
@@ -13,7 +14,7 @@ from app.mother_of_all_file import (
     get_rng,
 )
 from app.joke import get_joke
-from app.mountainview import get_saalbach_webcam_image
+from app.mountainview import get_saalbach_webcam_url
 from app.forecast import send_daily_forecast
 
 CommandHandler = Callable[[telegram.Bot, dict], Awaitable[None]]
@@ -38,6 +39,14 @@ def command(name: str, description: str):
 
 async def send_message(bot: telegram.Bot, msg: str, chat_id: int) -> None:
     await bot.send_message(text=msg, chat_id=chat_id)
+
+
+def get_bot_commands() -> list[BotCommand]:
+    return [BotCommand(command=cmd.name, description=cmd.description) for cmd in COMMANDS.values()]
+
+
+async def register_command_preview(bot: telegram.Bot) -> None:
+    await bot.set_my_commands(get_bot_commands())
 
 
 def generate_help_message() -> str:
@@ -117,19 +126,13 @@ async def handle_mansplain(bot: telegram.Bot, message: dict) -> None:
 
 @command("mountainview", "Get a live webcam from Saalbach Hinterglemm")
 async def handle_mountainview(bot: telegram.Bot, message: dict) -> None:
-    webcam_image_bytes = await get_saalbach_webcam_image()
-    
-    if webcam_image_bytes:
-        await bot.send_photo(
-            chat_id=message["chat"]["id"],
-            photo=webcam_image_bytes,
-            caption="📸 Live from Saalbach Hinterglemm! 🏔️⛷️",
-        )
-    else:
-        await bot.send_message(
-            chat_id=message["chat"]["id"],
-            text="Sorry, couldn't fetch webcam image right now. Try again later! 🏔️",
-        )
+    webcam_url, cam_name = get_saalbach_webcam_url()
+    caption = f"📸 {cam_name} – Saalbach Hinterglemm 🏔️⛷️"
+    await bot.send_photo(
+        chat_id=message["chat"]["id"],
+        photo=webcam_url,
+        caption=caption,
+    )
 
 
 @command("forecast", "Get today's weather forecast")

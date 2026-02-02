@@ -1,15 +1,25 @@
+import asyncio
+from contextlib import asynccontextmanager
 from typing import Any
 
 import telegram
 from fastapi import FastAPI, Response
 
 from app.array_extensions import key_exists
-from app.commands import handle_command
+from app.commands import handle_command, register_command_preview
 from app.forecast import send_daily_forecast
 from app.secrets import get_telegram_api_key
 from app.welcome import handle_new_members
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    bot = telegram.Bot(token=get_telegram_api_key())
+    await register_command_preview(bot)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 JSON_MEDIA_TYPE = "application/json"
 
@@ -25,14 +35,13 @@ async def message_stuff(request_data: dict[str, Any]) -> Response:
     bot = telegram.Bot(token=get_telegram_api_key())
 
     if key_exists(message, "new_chat_members"):
-        await handle_new_members(bot, message)
+        _ = asyncio.create_task(handle_new_members(bot, message))
         return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
 
     if not key_exists(message, "text") or not message["text"].startswith("/"):
         return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
 
-    await handle_command(bot, message)
-
+    _ = asyncio.create_task(handle_command(bot, message))
     return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
 
 

@@ -1,11 +1,15 @@
 import logging
 import random
+import re
 from datetime import date
 
 import httpx
 import telegram
+from bs4 import BeautifulSoup
 
 from app.secrets import get_telegram_api_key
+
+SAALBACH_WEATHER_URL = "https://www.saalbach.com/en/live-info/weather/weather-for-external-websites"
 
 TELEGRAM_CHAT_ID = -5036926629
 SAALBACH_LAT = 47.3917
@@ -145,6 +149,58 @@ def make_forecast(village: dict, mountain: dict) -> str:
     return msg
 
 
+def _parse_saalbach_weather(html: str) -> tuple[dict, dict] | None:
+    soup = BeautifulSoup(html, "html.parser")
+    for table in soup.find_all("table"):
+        if "Valley" in table.get_text() and "Top" in table.get_text():
+            break
+    else:
+        return None
+    tds = table.find_all("td")
+    temps = []
+    snows = []
+    for td in tds:
+        content = td.get_text(strip=True)
+        temp_match = re.match(r"(-?\d+)\s*°", content)
+        if temp_match:
+            temps.append(int(temp_match.group(1)))
+        snow_match = re.match(r"(\d+)\s*cm", content)
+        if snow_match:
+            snows.append(int(snow_match.group(1)))
+    if len(temps) < 3 or len(snows) < 3:
+        return None
+    valley_temp, mid_temp, top_temp = temps[0], temps[1], temps[2]
+    valley_snow, mid_snow, top_snow = snows[0], snows[1], snows[2]
+    village = {
+        "current": {"temperature_2m": valley_temp, "snow_depth": valley_snow / 100},
+        "daily": {"snowfall_sum": [0]},
+    }
+    mountain = {
+        "current": {"temperature_2m": top_temp, "snow_depth": top_snow / 100},
+        "daily": {"snowfall_sum": [0]},
+    }
+    return village, mountain
+
+
+async def get_saalbach_snow_report() -> tuple[dict, dict] | None:
+    try:
+        async with httpx.AsyncClient(
+            timeout=15,
+            follow_redirects=True,
+            headers={"User-Agent": "WispoRoboto/1.0 (Saalbach snow report)"},
+        ) as client:
+            resp = await client.get(SAALBACH_WEATHER_URL)
+            if resp.status_code != 200:
+                return None
+            result = _parse_saalbach_weather(resp.text)
+            if result:
+                logging.info("Saalbach official weather parsed successfully")
+            return result
+    except Exception as e:
+        logging.warning("Saalbach snow report fetch failed: %s", e)
+        return None
+
+
 async def get_weather_data(elevation: int) -> dict:
     params = {
         "latitude": SAALBACH_LAT,
@@ -168,6 +224,10 @@ async def send_daily_forecast() -> None:
     logging.info("Sending daily forecast")
     bot = telegram.Bot(token=get_telegram_api_key())
 
-    village_data = await get_weather_data(VILLAGE_ELEVATION)
-    mountain_data = await get_weather_data(MOUNTAIN_ELEVATION)
+    resort_data = await get_saalbach_snow_report()
+    if resort_data:
+        village_data, mountain_data = resort_data
+    else:
+        village_data = await get_weather_data(VILLAGE_ELEVATION)
+        mountain_data = await get_weather_data(MOUNTAIN_ELEVATION)
     await send_message(bot, make_forecast(village_data, mountain_data), TELEGRAM_CHAT_ID)
