@@ -201,12 +201,15 @@ async def get_saalbach_snow_report() -> tuple[dict, dict] | None:
         return None
 
 
-async def get_weather_data(elevation: int) -> dict:
+async def get_weather_data(elevation: int, include_wind: bool = False) -> dict:
+    current = ["temperature_2m", "snow_depth"]
+    if include_wind:
+        current.extend(["wind_speed_10m"])
     params = {
         "latitude": SAALBACH_LAT,
         "longitude": SAALBACH_LON,
         "elevation": elevation,
-        "current": ["temperature_2m", "snow_depth"],
+        "current": current,
         "daily": ["snowfall_sum", "temperature_2m_max", "temperature_2m_min"],
         "timezone": "Europe/Berlin",
     }

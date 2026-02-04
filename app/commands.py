@@ -15,7 +15,13 @@ from app.mother_of_all_file import (
 )
 from app.joke import get_joke
 from app.mountainview import get_saalbach_webcam_url
-from app.forecast import send_daily_forecast
+from app.forecast import (
+    VILLAGE_ELEVATION,
+    MOUNTAIN_ELEVATION,
+    get_weather_data,
+    send_daily_forecast,
+)
+from app.layers import get_layers_advice
 
 CommandHandler = Callable[[telegram.Bot, dict], Awaitable[None]]
 
@@ -138,6 +144,18 @@ async def handle_mountainview(bot: telegram.Bot, message: dict) -> None:
 @command("forecast", "Get today's weather forecast")
 async def handle_forecast_command(bot: telegram.Bot, message: dict) -> None:
     await send_daily_forecast()
+
+
+@command("layers", "What to wear today (weather-based)")
+async def handle_layers(bot: telegram.Bot, message: dict) -> None:
+    village_data = await get_weather_data(VILLAGE_ELEVATION, include_wind=True)
+    mountain_data = await get_weather_data(MOUNTAIN_ELEVATION, include_wind=True)
+    text = get_layers_advice(village_data, mountain_data)
+    await bot.send_message(
+        text=text,
+        chat_id=message["chat"]["id"],
+        parse_mode="Markdown",
+    )
 
 
 async def handle_command(bot: telegram.Bot, message: dict) -> bool:
