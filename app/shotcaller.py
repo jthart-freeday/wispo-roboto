@@ -49,11 +49,13 @@ def _mentioned_users(message: dict) -> list[dict]:
 
 def get_shotcaller_message(message: dict) -> str:
     mentioned = _mentioned_users(message)
+    if not mentioned:
+        return "Mention someone! Usage: /shotcaller @ties @milena"
     from_data = message.get("from")
     if isinstance(from_data, dict) and from_data.get("is_bot"):
         from_data = None
     sender_entry = _user_to_dict(from_data)
-    seen = set()
+    seen: set[int] = set()
     candidates: list[dict] = []
     if sender_entry and sender_entry["id"] not in seen:
         seen.add(sender_entry["id"])
@@ -62,8 +64,6 @@ def get_shotcaller_message(message: dict) -> str:
         if m["id"] not in seen:
             seen.add(m["id"])
             candidates.append(m)
-    if not candidates:
-        return "Mention someone! Usage: /shotcaller @user1 @user2"
     chosen = random.choice(candidates)
     user_id = chosen["id"]
     first_name = chosen["first_name"] or chosen["username"] or "Someone"
