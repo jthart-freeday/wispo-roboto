@@ -174,3 +174,4 @@ curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=${CLOUD_RU
 - `/addresshotel` - Get the hotel address
 - `/flip` - Flip a table
 - `/back` - Put the table back
+- `/whichrestaurant` - Pick a place to eat

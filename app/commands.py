@@ -23,6 +23,7 @@ from app.forecast import (
 )
 from app.layers import get_layers_advice
 from app.shotcaller import get_shotcaller_message
+from app.restaurant import get_random_restaurant
 
 CommandHandler = Callable[[telegram.Bot, dict], Awaitable[None]]
 
@@ -162,6 +163,16 @@ async def handle_layers(bot: telegram.Bot, message: dict) -> None:
 @command("shotcaller", "Pick someone to take a shot")
 async def handle_shotcaller(bot: telegram.Bot, message: dict) -> None:
     text = get_shotcaller_message(message)
+    await bot.send_message(
+        chat_id=message["chat"]["id"],
+        text=text,
+        parse_mode="Markdown",
+    )
+
+
+@command("whichrestaurant", "Get a restaurant tip in Saalbach-Hinterglemm")
+async def handle_whichrestaurant(bot: telegram.Bot, message: dict) -> None:
+    text = get_random_restaurant()
     await bot.send_message(
         chat_id=message["chat"]["id"],
         text=text,
