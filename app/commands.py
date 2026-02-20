@@ -78,6 +78,9 @@ async def handle_help(bot: telegram.Bot, message: dict) -> None:
 async def handle_lol(bot: telegram.Bot, message: dict) -> None:
     await send_message(bot, "lol to you, nerd!", message["chat"]["id"])
 
+@command("businessidea", "Generate a business idea")
+async def handle_businessidea(bot: telegram.Bot, message: dict) -> None:
+    await send_message(bot, "AI brothel!", message["chat"]["id"])
 
 @command("joke", "Get joke of the day")
 async def handle_joke(bot: telegram.Bot, message: dict) -> None:
