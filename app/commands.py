@@ -25,6 +25,7 @@ from app.layers import get_layers_advice
 from app.shotcaller import get_shotcaller_message
 from app.restaurant import get_random_restaurant
 from app.checkin import add_checkin, get_active_checkins
+from app.lookalike import start_lookalike
 
 CommandHandler = Callable[[telegram.Bot, dict], Awaitable[None]]
 
@@ -197,6 +198,16 @@ async def handle_checkin(bot: telegram.Bot, message: dict) -> None:
 @command("whereiseveryone", "See where everyone is right now")
 async def handle_whereiseveryone(bot: telegram.Bot, message: dict) -> None:
     text = get_active_checkins()
+    await bot.send_message(
+        chat_id=message["chat"]["id"],
+        text=text,
+        parse_mode="Markdown",
+    )
+
+
+@command("lookalike", "Start a look-a-like challenge with a random group member")
+async def handle_lookalike(bot: telegram.Bot, message: dict) -> None:
+    text = start_lookalike(message["chat"]["id"])
     await bot.send_message(
         chat_id=message["chat"]["id"],
         text=text,

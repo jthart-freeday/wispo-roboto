@@ -8,6 +8,7 @@ from fastapi import FastAPI, Response
 from app.array_extensions import key_exists
 from app.commands import handle_command, register_command_preview
 from app.forecast import send_daily_forecast
+from app.lookalike import message_is_lookalike_submission, get_random_reaction_emoji
 from app.secrets import get_telegram_api_key
 from app.welcome import handle_new_members
 
@@ -36,6 +37,13 @@ async def message_stuff(request_data: dict[str, Any]) -> Response:
 
     if key_exists(message, "new_chat_members"):
         _ = asyncio.create_task(handle_new_members(bot, message))
+        return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
+
+    if message_is_lookalike_submission(message):
+        emoji = get_random_reaction_emoji()
+        _ = asyncio.create_task(
+            bot.send_message(chat_id=message["chat"]["id"], text=emoji)
+        )
         return Response(status_code=202, media_type=JSON_MEDIA_TYPE)
 
     if not key_exists(message, "text") or not message["text"].startswith("/"):
