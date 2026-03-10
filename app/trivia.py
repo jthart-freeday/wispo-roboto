@@ -1,9 +1,13 @@
+import csv
 import html
+import io
 import random
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import lru_cache
 
 import httpx
+from google.cloud import storage
 
 QUESTION_EXPIRY_MINUTES = 5
 RATE_LIMIT_QUESTIONS = 5
@@ -30,8 +34,53 @@ class TriviaScore:
 
 
 _active_questions: dict[int, TriviaQuestion] = {}
-_scores: dict[int, TriviaScore] = {}
 _user_requests: dict[int, list[datetime]] = {}
+
+GCS_BUCKET = "copy-ping-pong-bot"
+GCS_SCORES_PATH = "trivia_scores.csv"
+
+
+@lru_cache
+def _get_storage_client() -> storage.Client:
+    return storage.Client()
+
+
+def _get_blob() -> storage.Blob:
+    client = _get_storage_client()
+    bucket = client.bucket(GCS_BUCKET)
+    return bucket.blob(GCS_SCORES_PATH)
+
+
+def _load_scores() -> dict[int, TriviaScore]:
+    blob = _get_blob()
+    if not blob.exists():
+        return {}
+    content = blob.download_as_text()
+    scores: dict[int, TriviaScore] = {}
+    reader = csv.DictReader(io.StringIO(content))
+    for row in reader:
+        user_id = int(row["user_id"])
+        scores[user_id] = TriviaScore(
+            user_name=row["user_name"],
+            correct=int(row["correct"]),
+            total=int(row["total"]),
+        )
+    return scores
+
+
+def _save_scores(scores: dict[int, TriviaScore]) -> None:
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=["user_id", "user_name", "correct", "total"])
+    writer.writeheader()
+    for user_id, score in scores.items():
+        writer.writerow({
+            "user_id": user_id,
+            "user_name": score.user_name,
+            "correct": score.correct,
+            "total": score.total,
+        })
+    blob = _get_blob()
+    blob.upload_from_string(output.getvalue(), content_type="text/csv")
 
 
 def _cleanup_expired_questions() -> None:
@@ -142,25 +191,31 @@ def handle_trivia_reply(message: dict) -> str | None:
     del _active_questions[bot_msg_id]
 
     user_name = question.user_name
-    if user_id not in _scores:
-        _scores[user_id] = TriviaScore(user_name=user_name, correct=0, total=0)
+    scores = _load_scores()
+    if user_id not in scores:
+        scores[user_id] = TriviaScore(user_name=user_name, correct=0, total=0)
 
-    score = _scores[user_id]
+    score = scores[user_id]
     score.total += 1
     score.user_name = user_name
 
     if answer == question.correct_answer:
         score.correct += 1
+
+    _save_scores(scores)
+
+    if answer == question.correct_answer:
         return f"✅ Correct! Nice one, {user_name}! Your score: {score.correct}/{score.total}"
     else:
         return f"❌ Wrong! The answer was {question.correct_answer}. Your score: {score.correct}/{score.total}"
 
 
 def get_leaderboard() -> str:
-    if not _scores:
+    scores = _load_scores()
+    if not scores:
         return "No trivia scores yet. Be the first! /trivia"
 
-    sorted_scores = sorted(_scores.values(), key=lambda s: s.correct, reverse=True)
+    sorted_scores = sorted(scores.values(), key=lambda s: s.correct, reverse=True)
     lines = ["🏆 *Trivia Leaderboard*\n"]
     for i, s in enumerate(sorted_scores, 1):
         lines.append(f"{i}. {s.user_name} — {s.correct}/{s.total} correct")
