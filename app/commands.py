@@ -26,6 +26,7 @@ from app.mother_of_all_file import (
 from app.mountainview import get_saalbach_webcam_url
 from app.restaurant import get_random_restaurant
 from app.shotcaller import get_shotcaller_message
+from app.trivia import API_ERROR, RATE_LIMITED, get_leaderboard, get_trivia_question, store_question
 
 CommandHandler = Callable[[telegram.Bot, dict], Awaitable[None]]
 
@@ -216,6 +217,46 @@ async def handle_bingo(bot: telegram.Bot, message: dict) -> None:
         text=bingo,
         parse_mode="Markdown",
     )
+
+
+@command("trivialeaderboard", "See the trivia leaderboard")
+async def handle_trivialeaderboard(bot: telegram.Bot, message: dict) -> None:
+    text = get_leaderboard()
+    await bot.send_message(
+        text=text,
+        chat_id=message["chat"]["id"],
+        parse_mode="Markdown",
+    )
+
+
+@command("trivia", "Answer a trivia question")
+async def handle_trivia(bot: telegram.Bot, message: dict) -> None:
+    user_id = message["from"]["id"]
+    user_name = get_name(message)
+    result = await get_trivia_question(user_id, user_name)
+    chat_id = message["chat"]["id"]
+
+    if result == RATE_LIMITED:
+        await bot.send_message(
+            text="You've used all 5 trivia questions this hour. Try again later!",
+            chat_id=chat_id,
+        )
+        return
+
+    if result == API_ERROR:
+        await bot.send_message(
+            text="Sorry, couldn't fetch a trivia question right now. Try again later!",
+            chat_id=chat_id,
+        )
+        return
+
+    question_text, correct_letter = result
+    sent = await bot.send_message(
+        text=question_text,
+        chat_id=chat_id,
+        parse_mode="Markdown",
+    )
+    store_question(sent.message_id, user_id, user_name, correct_letter)
 
 
 async def handle_command(bot: telegram.Bot, message: dict) -> bool:
