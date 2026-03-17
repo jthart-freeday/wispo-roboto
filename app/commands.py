@@ -26,6 +26,7 @@ from app.mother_of_all_file import (
 from app.mountainview import get_saalbach_webcam_url
 from app.restaurant import get_random_restaurant
 from app.shotcaller import get_shotcaller_message
+from app.linkedin import get_linkedin_post_overview
 from app.trivia import API_ERROR, RATE_LIMITED, get_leaderboard, get_trivia_question, store_question
 
 CommandHandler = Callable[[telegram.Bot, dict], Awaitable[None]]
@@ -215,6 +216,16 @@ async def handle_bingo(bot: telegram.Bot, message: dict) -> None:
     await bot.send_message(
         chat_id=message["chat"]["id"],
         text=bingo,
+        parse_mode="Markdown",
+    )
+
+
+@command("linkedin", "Bekijk je LinkedIn post statistieken")
+async def handle_linkedin(bot: telegram.Bot, message: dict) -> None:
+    text = await get_linkedin_post_overview()
+    await bot.send_message(
+        text=text,
+        chat_id=message["chat"]["id"],
         parse_mode="Markdown",
     )
 

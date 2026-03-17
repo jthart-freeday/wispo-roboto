@@ -11,6 +11,7 @@ if env_path.exists():
 SECRET_ID_TO_ENV_VAR = {
     "telegram-api-key": "TELEGRAM_API_KEY",
     "skaping-api-key": "SKAPING_API_KEY",
+    "linkedin-access-token": "LINKEDIN_ACCESS_TOKEN",
 }
 
 
