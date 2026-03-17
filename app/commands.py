@@ -261,8 +261,8 @@ async def handle_trivia(bot: telegram.Bot, message: dict) -> None:
 
 async def handle_command(bot: telegram.Bot, message: dict) -> bool:
     text = message.get("text", "")
-    for cmd_name, cmd in COMMANDS.items():
-        if cmd_name in text:
-            await cmd.handler(bot, message)
-            return True
+    cmd_text = text.split()[0].lstrip("/").split("@")[0] if text else ""
+    if cmd_text in COMMANDS:
+        await COMMANDS[cmd_text].handler(bot, message)
+        return True
     return False
